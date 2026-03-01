@@ -1,40 +1,20 @@
-use std::env;
+mod fmt;
 
 fn main() {
-    // Получаем аргументы в виде итератора и преобразуем его в коллецию Vec
-    // Пропускаем первый аргумент, т.к. он является путём к исполняемому файлу
-    let args: Vec<String> = env::args().skip(1).collect();
-
-        // Проверка на количество аргументов
-    if args.len() < 1 {
-        println!("Not enough arguments!");
-    }
-
-    // Матчинг команд
-    match args[0].as_str() {
-        // Добавление задачи
-        "add" => {
-            println!("You called add");
-        }
-        // Удаление задачи
-        "del" => {
-            println!("You called del");
-        }
-        // Просмотреть задачи
-        "show" => {
-            println!("You called show");
-        }
-        // Отметить задачу
-        "mark" => {
-            println!("You called mark");
-        }
-        // Сохранить задачи в файл
-        "save" => {
-            println!("You called save");
-        }
-        // Неизвестная задача
-        _ => {
-            println!("Unknown command");
+    fmt::print_menu();
+    let (command, args) = fmt::read_prompt();
+    println!("[{}]\n[{}]", command, args);
+    match command.as_str() {
+            "add" => {
+                if !args.is_empty() {
+                    println!("You called: {} with args: {}!", command, args);
+                } else {
+                    println!("You called: {} with no args!", command);
+                }
+                
+            }
+            _ => {
+                println!("Unknown")
+            }
         }
     }
-}
