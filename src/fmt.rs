@@ -1,4 +1,7 @@
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    path::{Path, PathBuf},
+};
 
 pub fn print_menu() {
     println!(" = = = = = N O T O = = = = =");
@@ -6,8 +9,10 @@ pub fn print_menu() {
     println!("- ls [index]");
     println!("- mark <index>");
     println!("- rm <index>");
+    println!("- clean");
     println!("- save <path>");
     println!("- load <path>");
+    println!("- cls");
     println!("- help");
 }
 
@@ -20,6 +25,7 @@ commands:
     ls      [index]    Show all tasks or task by index
     mark    <index>    Mark task as done
     rm      [index]    Delete tasks or by index
+    clean              Delete all completed tasks
     save    <path>     Save tasks to file
     load    <path>     Load tasks from file
     cls                Clear terminal
@@ -46,18 +52,25 @@ pub fn read_prompt() -> (String, String) {
 }
 
 pub fn print_usage(command: &str) {
-    println!("Invalid syntax!\n\nUsage:");
+    println!("\nUsage:");
 
     match command {
-        "add" => println!("    add <task>"),
-        "ls" => println!("    ls [index]"),
-        "mark" => println!("    mark <index>"),
-        "rm" => println!("    rm [index]"),
-        "save" => println!("    save [path]"),
-        "load" => println!("    load <path>"),
+        "add" => println!("  add <task>                  Add a new task"),
+        "ls" => println!("  ls [index]                  Show all tasks or one task by index"),
+        "mark" => println!("  mark <index>               Mark task as done"),
+        "rm" => println!(
+            "  rm [index]                  Delete one task by index (no index = delete all)"
+        ),
+        "clean" => println!("  clean                       Delete all completed (done) tasks"),
+        "save" => println!("  save <path>                 Save tasks to file by path"),
+        "load" => println!("  load <path>                 Load tasks from file by path"),
+        "cls" => println!("  cls                         Clear the terminal screen"),
+        "exit" => println!("  exit                        Exit the program"),
+        "help" => println!("  help                        Show this help message"),
+
         _ => {
             println!("  Unknown command: {}", command);
-            println!("  Try: help");
+            println!("  Try: noto help");
             return;
         }
     }
@@ -95,4 +108,9 @@ pub fn ask_confirmation() -> bool {
 
 pub fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
+}
+
+pub fn parse_path(prompt: String) -> PathBuf {
+    // Place for future error handling
+    PathBuf::from(prompt)
 }

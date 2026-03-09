@@ -1,6 +1,6 @@
 use crate::{
-    fmt::{ask_confirmation, clear_screen, parse_task_index, print_help, print_usage},
-    storage::Task,
+    fmt::{ask_confirmation, clear_screen, parse_path, parse_task_index, print_help, print_usage},
+    storage::{Task, create_and_write_savefile, parse_lines_to_tasks, read_savefile},
 };
 mod fmt;
 mod storage;
@@ -18,7 +18,9 @@ fn main() {
                         done: false,
                     };
                     tasks.push(task);
+                    println!("Task {} added.", tasks.len());
                 } else {
+                    println!("Missing <task>!");
                     print_usage("add");
                 }
             }
@@ -40,6 +42,7 @@ fn main() {
                         println!("  {}. {} {}", idx + 1, status, task.text);
                     } else {
                         println!("Invalid index! Use a number from 1 to {}.", tasks.len());
+                        print_usage("ls");
                     }
                 }
             }
@@ -51,7 +54,7 @@ fn main() {
                 } else if let Some(idx) = parse_task_index(&args, tasks.len()) {
                     tasks[idx].done = !tasks[idx].done;
                     let status = if tasks[idx].done { "done" } else { "not done" };
-                    println!("Task #{} marked as {}.", idx + 1, status);
+                    println!("Task {} marked as {}.", idx + 1, status);
                 } else {
                     println!("Invalid index! Use a number from 1 to {}.", tasks.len());
                     print_usage("mark");
@@ -59,7 +62,7 @@ fn main() {
             }
             "rm" => {
                 if args.is_empty() {
-                    println!("{} tasks will be deleted, are you sure?", tasks.len());
+                    println!("{} tasks will be deleted, are you sure? [y/N]", tasks.len());
                     if ask_confirmation() {
                         tasks.clear();
                         println!("Tasks deleted.");
@@ -77,19 +80,87 @@ fn main() {
                     }
                 }
             }
+            "clean" => {
+                if !args.is_empty() {
+                    println!("Too many arguments!");
+                    continue;
+                }
+                let old_len = tasks.len();
+                tasks.retain(|task| !task.done);
+                println!("{} tasks cleaned.", old_len - tasks.len());
+            }
             "save" => {
-                println!("WIP");
+                if args.is_empty() {
+                    println!("Missing path!");
+                    print_usage("save");
+                    continue;
+                }
+                let filepath = parse_path(args);
+                match create_and_write_savefile(&filepath, &tasks) {
+                    Ok(_) => {
+                        println!(
+                            "{} tasks saved to {} successfully.",
+                            tasks.len(),
+                            filepath.display()
+                        )
+                    }
+                    Err(e) => {
+                        println!("Error while saving file: {}", e)
+                    }
+                }
             }
             "load" => {
-                println!("WIP");
+                if args.is_empty() {
+                    println!("Missing path!");
+                    print_usage("load");
+                    continue;
+                }
+                let filepath = parse_path(args);
+                match read_savefile(&filepath) {
+                    Ok(lines) => {
+                        let parsed_tasks = parse_lines_to_tasks(lines);
+                        match parsed_tasks {
+                            Some(loaded_tasks) => {
+                                if loaded_tasks.len() == 0 {
+                                    println!("Tasks file is empty, are you sure to load it? [y/N]");
+                                    if ask_confirmation() {
+                                        tasks = loaded_tasks;
+                                        println!("{} loaded successfully.", tasks.len());
+                                    } else {
+                                        continue;
+                                    }
+                                } else {
+                                    tasks = loaded_tasks;
+                                    println!("{} loaded successfully.", tasks.len());
+                                }
+                            }
+                            None => {
+                                println!(
+                                    "Error while parsing tasks. Most likely, file is corrupted."
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        println!("Error while reading file: {}.", e);
+                    }
+                }
             }
             "help" => {
                 print_help();
             }
             "cls" => {
+                if !args.is_empty() {
+                    println!("Too many arguments!");
+                    continue;
+                }
                 clear_screen();
             }
             "exit" => {
+                if !args.is_empty() {
+                    println!("Too many arguments!");
+                    continue;
+                }
                 println!("Bye!");
                 break;
             }
